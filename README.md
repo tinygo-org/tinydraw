@@ -2,6 +2,9 @@ Primitive
 =========
 Primitive is a package for drawing primitives on [TinyGo](https://tinygo.org/) displays. It's heavily based on [Adafruit's GFX library](https://github.com/adafruit/Adafruit-GFX-Library).
 
+
+![example](https://raw.githubusercontent.com/conejoninja/primitive/master/example.png)
+
 This package is experimental and may change in the future. It has not been optimized for speed or memory usage (yet).  I'm not responsible if whatever you are building explodes.
 
 
