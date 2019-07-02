@@ -1,9 +1,9 @@
-package primitive
+package tinydraw
 
 import (
 	"image/color"
 
-	"github.com/tinygo-org/drivers"
+	"tinygo.org/x/drivers"
 )
 
 // DrawLine draws a line between two points
@@ -139,7 +139,6 @@ func DrawTriangle(display drivers.Displayer, x0 int16, y0 int16, x1 int16, y1 in
 	DrawLine(display, x0, y0, x2, y2, color)
 	DrawLine(display, x1, y1, x2, y2, color)
 }
-
 
 // DrawFilledTriangle draws a filled triangle given three points
 func DrawFilledTriangle(display drivers.Displayer, x0 int16, y0 int16, x1 int16, y1 int16, x2 int16, y2 int16, color color.RGBA) {
