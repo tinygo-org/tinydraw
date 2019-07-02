@@ -6,8 +6,8 @@ import (
 	"tinygo.org/x/drivers"
 )
 
-// DrawLine draws a line between two points
-func DrawLine(display drivers.Displayer, x0 int16, y0 int16, x1 int16, y1 int16, color color.RGBA) {
+// Line draws a line between two points
+func Line(display drivers.Displayer, x0 int16, y0 int16, x1 int16, y1 int16, color color.RGBA) {
 	if x0 == x1 {
 		if y0 > y1 {
 			y0, y1 = y1, y0
@@ -61,23 +61,23 @@ func DrawLine(display drivers.Displayer, x0 int16, y0 int16, x1 int16, y1 int16,
 	}
 }
 
-// DrawRectangle draws a rectangle given a point and size
-func DrawRectangle(display drivers.Displayer, x int16, y int16, w int16, h int16, color color.RGBA) {
-	DrawLine(display, x, y, x+w, y, color)
-	DrawLine(display, x, y, x, y+h, color)
-	DrawLine(display, x+w, y, x+w, y+h, color)
-	DrawLine(display, x, y+h, x+w, y+h, color)
+// Rectangle draws a rectangle given a point and size
+func Rectangle(display drivers.Displayer, x int16, y int16, w int16, h int16, color color.RGBA) {
+	Line(display, x, y, x+w, y, color)
+	Line(display, x, y, x, y+h, color)
+	Line(display, x+w, y, x+w, y+h, color)
+	Line(display, x, y+h, x+w, y+h, color)
 }
 
-// DrawFilledRectangle draws a filled rectangle given a point and size
-func DrawFilledRectangle(display drivers.Displayer, x int16, y int16, w int16, h int16, color color.RGBA) {
+// FilledRectangle draws a filled rectangle given a point and size
+func FilledRectangle(display drivers.Displayer, x int16, y int16, w int16, h int16, color color.RGBA) {
 	for i := x; i <= x+w; i++ {
-		DrawLine(display, i, y, i, y+h, color)
+		Line(display, i, y, i, y+h, color)
 	}
 }
 
-// DrawCircle draws a circle given a point and radius
-func DrawCircle(display drivers.Displayer, x0 int16, y0 int16, r int16, color color.RGBA) {
+// Circle draws a circle given a point and radius
+func Circle(display drivers.Displayer, x0 int16, y0 int16, r int16, color color.RGBA) {
 	f := 1 - r
 	ddfx := int16(1)
 	ddfy := -2 * r
@@ -108,14 +108,14 @@ func DrawCircle(display drivers.Displayer, x0 int16, y0 int16, r int16, color co
 	}
 }
 
-// DrawFilledCircle draws a circle given a point and radius
-func DrawFilledCircle(display drivers.Displayer, x0 int16, y0 int16, r int16, color color.RGBA) {
+// FilledCircle draws a filled circle given a point and radius
+func FilledCircle(display drivers.Displayer, x0 int16, y0 int16, r int16, color color.RGBA) {
 	f := 1 - r
 	ddfx := int16(1)
 	ddfy := -2 * r
 	x := int16(0)
 	y := r
-	DrawLine(display, x0, y0-r, x0, y0+r, color)
+	Line(display, x0, y0-r, x0, y0+r, color)
 	for x < y {
 		if f >= 0 {
 			y--
@@ -126,22 +126,22 @@ func DrawFilledCircle(display drivers.Displayer, x0 int16, y0 int16, r int16, co
 		ddfx += 2
 		f += ddfx
 
-		DrawLine(display, x0+x, y0-y, x0+x, y0+y, color)
-		DrawLine(display, x0+y, y0-x, x0+y, y0+x, color)
-		DrawLine(display, x0-x, y0-y, x0-x, y0+y, color)
-		DrawLine(display, x0-y, y0-x, x0-y, y0+x, color)
+		Line(display, x0+x, y0-y, x0+x, y0+y, color)
+		Line(display, x0+y, y0-x, x0+y, y0+x, color)
+		Line(display, x0-x, y0-y, x0-x, y0+y, color)
+		Line(display, x0-y, y0-x, x0-y, y0+x, color)
 	}
 }
 
-// DrawTriangle draws a triangle given three points
-func DrawTriangle(display drivers.Displayer, x0 int16, y0 int16, x1 int16, y1 int16, x2 int16, y2 int16, color color.RGBA) {
-	DrawLine(display, x0, y0, x1, y1, color)
-	DrawLine(display, x0, y0, x2, y2, color)
-	DrawLine(display, x1, y1, x2, y2, color)
+// Triangle draws a triangle given three points
+func Triangle(display drivers.Displayer, x0 int16, y0 int16, x1 int16, y1 int16, x2 int16, y2 int16, color color.RGBA) {
+	Line(display, x0, y0, x1, y1, color)
+	Line(display, x0, y0, x2, y2, color)
+	Line(display, x1, y1, x2, y2, color)
 }
 
-// DrawFilledTriangle draws a filled triangle given three points
-func DrawFilledTriangle(display drivers.Displayer, x0 int16, y0 int16, x1 int16, y1 int16, x2 int16, y2 int16, color color.RGBA) {
+// FilledTriangle draws a filled triangle given three points
+func FilledTriangle(display drivers.Displayer, x0 int16, y0 int16, x1 int16, y1 int16, x2 int16, y2 int16, color color.RGBA) {
 	if y0 > y1 {
 		x0, y0, x1, y1 = x1, y1, x0, y0
 	}
@@ -165,7 +165,7 @@ func DrawFilledTriangle(display drivers.Displayer, x0 int16, y0 int16, x1 int16,
 		} else if x2 > b {
 			b = x2
 		}
-		DrawLine(display, a, y0, b, y0, color)
+		Line(display, a, y0, b, y0, color)
 		return
 	}
 
@@ -191,7 +191,7 @@ func DrawFilledTriangle(display drivers.Displayer, x0 int16, y0 int16, x1 int16,
 		b = x0 + sb/dy02
 		sa += dx01
 		sb += dx02
-		DrawLine(display, a, y, b, y, color)
+		Line(display, a, y, b, y, color)
 	}
 
 	sa = dx12 * (last - y1)
@@ -202,6 +202,6 @@ func DrawFilledTriangle(display drivers.Displayer, x0 int16, y0 int16, x1 int16,
 		b = x0 + sb/dy02
 		sa += dx12
 		sb += dx02
-		DrawLine(display, a, y, b, y, color)
+		Line(display, a, y, b, y, color)
 	}
 }
