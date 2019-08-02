@@ -4,6 +4,7 @@ import (
 	"image/color"
 
 	"tinygo.org/x/drivers"
+	"github.com/pkg/errors"
 )
 
 // Line draws a line between two points
@@ -62,17 +63,23 @@ func Line(display drivers.Displayer, x0 int16, y0 int16, x1 int16, y1 int16, col
 }
 
 // Rectangle draws a rectangle given a point and size
-func Rectangle(display drivers.Displayer, x int16, y int16, w int16, h int16, color color.RGBA) {
-	Line(display, x, y, x+w, y, color)
-	Line(display, x, y, x, y+h, color)
-	Line(display, x+w, y, x+w, y+h, color)
-	Line(display, x, y+h, x+w, y+h, color)
+func Rectangle(display drivers.Displayer, x int16, y int16, w int16, h int16, color color.RGBA) error {
+	if w <= 0 || h <= 0 {
+		return errors.New("empty rectangle")
+	}
+	Line(display, x, y, x+w-1, y, color)
+	Line(display, x, y, x, y+h-1, color)
+	Line(display, x+w-1, y, x+w-1, y+h, color)
+	Line(display, x, y+h-1, x+w-1, y+h-1, color)
 }
 
 // FilledRectangle draws a filled rectangle given a point and size
-func FilledRectangle(display drivers.Displayer, x int16, y int16, w int16, h int16, color color.RGBA) {
-	for i := x; i <= x+w; i++ {
-		Line(display, i, y, i, y+h, color)
+func FilledRectangle(display drivers.Displayer, x int16, y int16, w int16, h int16, color color.RGBA) error {
+	if w <= 0 || h <= 0 {
+		return errors.New("empty rectangle")
+	}
+	for i := x; i < x+w; i++ {
+		Line(display, i, y, i, y+h-1, color)
 	}
 }
 
