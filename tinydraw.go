@@ -3,8 +3,9 @@ package tinydraw
 import (
 	"image/color"
 
-	"tinygo.org/x/drivers"
 	"errors"
+
+	"tinygo.org/x/drivers"
 )
 
 // Line draws a line between two points
@@ -71,6 +72,7 @@ func Rectangle(display drivers.Displayer, x int16, y int16, w int16, h int16, co
 	Line(display, x, y, x, y+h-1, color)
 	Line(display, x+w-1, y, x+w-1, y+h, color)
 	Line(display, x, y+h-1, x+w-1, y+h-1, color)
+	return nil
 }
 
 // FilledRectangle draws a filled rectangle given a point and size
@@ -81,6 +83,7 @@ func FilledRectangle(display drivers.Displayer, x int16, y int16, w int16, h int
 	for i := x; i < x+w; i++ {
 		Line(display, i, y, i, y+h-1, color)
 	}
+	return nil
 }
 
 // Circle draws a circle given a point and radius
