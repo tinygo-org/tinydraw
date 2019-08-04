@@ -4,7 +4,7 @@ import (
 	"image/color"
 
 	"tinygo.org/x/drivers"
-	"github.com/pkg/errors"
+	"errors"
 )
 
 // Line draws a line between two points
