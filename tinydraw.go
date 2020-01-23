@@ -63,7 +63,7 @@ func Line(display drivers.Displayer, x0 int16, y0 int16, x1 int16, y1 int16, col
 	}
 }
 
-// Rectangle draws a rectangle given a point and size
+// Rectangle draws a rectangle given a point, width and height
 func Rectangle(display drivers.Displayer, x int16, y int16, w int16, h int16, color color.RGBA) error {
 	if w <= 0 || h <= 0 {
 		return errors.New("empty rectangle")
@@ -75,7 +75,7 @@ func Rectangle(display drivers.Displayer, x int16, y int16, w int16, h int16, co
 	return nil
 }
 
-// FilledRectangle draws a filled rectangle given a point and size
+// FilledRectangle draws a filled rectangle given a point, width and height
 func FilledRectangle(display drivers.Displayer, x int16, y int16, w int16, h int16, color color.RGBA) error {
 	if w <= 0 || h <= 0 {
 		return errors.New("empty rectangle")
