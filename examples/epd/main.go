@@ -5,7 +5,7 @@ import (
 
 	"image/color"
 
-	"github.com/conejoninja/tinydraw"
+	"tinygo.org/x/tinydraw"
 	"tinygo.org/x/drivers/waveshare-epd/epd2in13x"
 )
 

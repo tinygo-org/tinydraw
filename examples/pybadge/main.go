@@ -4,7 +4,7 @@ import (
 	"image/color"
 	"machine"
 
-	"github.com/conejoninja/tinydraw"
+	"tinygo.org/x/tinydraw"
 
 	"tinygo.org/x/drivers/st7735"
 )

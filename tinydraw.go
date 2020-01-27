@@ -1,4 +1,4 @@
-package tinydraw
+package tinydraw // import "tinygo.org/x/tinydraw"
 
 import (
 	"image/color"
