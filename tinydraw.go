@@ -70,7 +70,7 @@ func Rectangle(display drivers.Displayer, x int16, y int16, w int16, h int16, co
 	}
 	Line(display, x, y, x+w-1, y, color)
 	Line(display, x, y, x, y+h-1, color)
-	Line(display, x+w-1, y, x+w-1, y+h, color)
+	Line(display, x+w-1, y, x+w-1, y+h-1, color)
 	Line(display, x, y+h-1, x+w-1, y+h-1, color)
 	return nil
 }
