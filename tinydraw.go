@@ -196,7 +196,8 @@ func FilledTriangle(display drivers.Displayer, x0 int16, y0 int16, x1 int16, y1 
 		last = y1
 	}
 
-	for y := y0; y <= last; y++ {
+	y := y0
+	for ; y <= last; y++ {
 		a = x0 + sa/dy01
 		b = x0 + sb/dy02
 		sa += dx01
@@ -207,7 +208,7 @@ func FilledTriangle(display drivers.Displayer, x0 int16, y0 int16, x1 int16, y1 
 	sa = dx12 * (last - y1)
 	sb = dx02 * (last - y0)
 
-	for y := last; y <= y2; y++ {
+	for ; y <= y2; y++ {
 		a = x1 + sa/dy12
 		b = x0 + sb/dy02
 		sa += dx12
