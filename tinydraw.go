@@ -8,8 +8,108 @@ import (
 	"tinygo.org/x/drivers"
 )
 
-// Line draws a line between two points
+//This implementation of bresenham always steps in increasing y direction. This enables it to be used to draw filled triangles
+type bresenham struct {
+	cx int16
+	cy int16
+
+	x0 int16
+	y0 int16
+
+	x1 int16
+	y1 int16
+
+	adx   int16
+	dx    int16
+	dy    int16
+	steep bool
+	xstep int16
+	err   int16
+}
+
+func newBresenham(x0, y0, x1, y1 int16) bresenham {
+
+	b := bresenham{
+		x0: x0,
+		y0: y0,
+		x1: x1,
+		y1: y1,
+	}
+
+	b.dx = x1 - x0
+	b.adx = b.dx
+	b.xstep = 1
+	if b.adx < 0 {
+		b.adx = -b.adx
+		b.xstep = -1
+	}
+	b.dy = y1 - y0
+	b.steep = b.dy > b.adx
+	if b.steep {
+		b.err = b.dy / 2
+	} else {
+		b.err = b.adx / 2
+	}
+
+	return b
+}
+
+func (b *bresenham) Next() bool {
+	if b.cx == b.x1 && b.cy == b.y1 {
+		return false
+	}
+
+	b.cx = b.x0
+	b.cy = b.y0
+
+	if b.steep {
+		b.err -= b.adx
+		if b.err < 0 {
+			if b.x0 != b.x1 {
+				b.x0 += b.xstep
+			}
+			b.err += b.dy
+		}
+
+		if b.y0 != b.y1 {
+			b.y0++
+		}
+	} else {
+		b.err -= b.dy
+		if b.err < 0 {
+			if b.y0 != b.y1 {
+				b.y0++
+			}
+			b.err += b.adx
+		}
+
+		if b.x0 != b.x1 {
+			b.x0 += b.xstep
+		}
+	}
+
+	return true
+}
+
+func (b *bresenham) Cur() (rx int16, ry int16) {
+	return b.cx, b.cy
+}
+
+func horizLine(display drivers.Displayer, x0 int16, y0 int16, x1 int16, color color.RGBA) {
+	if x0 > x1 {
+		x0, x1 = x1, x0
+	}
+	for ; x0 <= x1; x0++ {
+		display.SetPixel(x0, y0, color)
+	}
+}
+
 func Line(display drivers.Displayer, x0 int16, y0 int16, x1 int16, y1 int16, color color.RGBA) {
+
+	if y0 > y1 {
+		x0, y0, x1, y1 = x1, y1, x0, y0
+	}
+
 	if x0 == x1 {
 		if y0 > y1 {
 			y0, y1 = y1, y0
@@ -18,47 +118,14 @@ func Line(display drivers.Displayer, x0 int16, y0 int16, x1 int16, y1 int16, col
 			display.SetPixel(x0, y0, color)
 		}
 	} else if y0 == y1 {
-		if x0 > x1 {
-			x0, x1 = x1, x0
-		}
-		for ; x0 <= x1; x0++ {
-			display.SetPixel(x0, y0, color)
-		}
+		horizLine(display, x0, y0, x1, color)
 	} else { // Bresenham
-		dx := x1 - x0
-		if dx < 0 {
-			dx = -dx
-		}
-		dy := y1 - y0
-		if dy < 0 {
-			dy = -dy
-		}
-		steep := dy > dx
-		if steep {
-			x0, x1, y0, y1 = y0, y1, x0, x1
-		}
-		if x0 > x1 {
-			x0, x1, y0, y1 = x1, x0, y1, y0
-		}
-		dx = x1 - x0
-		dy = y1 - y0
-		ystep := int16(1)
-		if dy < 0 {
-			dy = -dy
-			ystep = -1
-		}
-		err := dx / 2
-		for ; x0 <= x1; x0++ {
-			if steep {
-				display.SetPixel(y0, x0, color)
-			} else {
-				display.SetPixel(x0, y0, color)
-			}
-			err -= dy
-			if err < 0 {
-				y0 += ystep
-				err += dx
-			}
+
+		b := newBresenham(x0, y0, x1, y1)
+
+		for b.Next() {
+			x, y := b.Cur()
+			display.SetPixel(x, y, color)
 		}
 	}
 }
@@ -145,74 +212,125 @@ func FilledCircle(display drivers.Displayer, x0 int16, y0 int16, r int16, color 
 
 // Triangle draws a triangle given three points
 func Triangle(display drivers.Displayer, x0 int16, y0 int16, x1 int16, y1 int16, x2 int16, y2 int16, color color.RGBA) {
+
+	if y0 > y1 {
+		x0, y0, x1, y1 = x1, y1, x0, y0
+	}
+	if y0 > y2 {
+		x0, y0, x2, y2 = x2, y2, x0, y0
+	}
+	if y1 > y2 {
+		x2, y2, x1, y1 = x1, y1, x2, y2
+	}
+
 	Line(display, x0, y0, x1, y1, color)
 	Line(display, x0, y0, x2, y2, color)
 	Line(display, x1, y1, x2, y2, color)
 }
 
-// FilledTriangle draws a filled triangle given three points
-func FilledTriangle(display drivers.Displayer, x0 int16, y0 int16, x1 int16, y1 int16, x2 int16, y2 int16, color color.RGBA) {
+type rowExtent struct {
+	minX int16
+	maxX int16
+}
+
+func (r *rowExtent) set(x int16) {
+	if x < r.minX {
+		r.minX = x
+	}
+
+	if x > r.maxX {
+		r.maxX = x
+	}
+}
+
+func minMaxforRow(b *bresenham) (int16, int16) {
+
+	cx, cy := b.Cur()
+
+	minx := cx
+	maxx := cx
+
+	for b.Next() {
+		nx, ny := b.Cur()
+		if ny != cy {
+			break //Next line
+		}
+
+		if nx < minx {
+			minx = nx
+		}
+
+		if nx > maxx {
+			maxx = nx
+		}
+	}
+
+	return minx, maxx
+}
+
+func combineMinMax(min1, max1, min2, max2 int16) (min int16, max int16) {
+
+	if min2 < min1 {
+		min = min2
+	} else {
+		min = min1
+	}
+
+	if max2 > max1 {
+		max = max2
+	} else {
+		max = max1
+	}
+
+	return
+}
+
+func FilledTriangle(display drivers.Displayer, x0 int16, y0 int16, x1 int16, y1 int16, x2 int16, y2 int16, c color.RGBA) {
+
+	//Sort by Y coordinate
 	if y0 > y1 {
 		x0, y0, x1, y1 = x1, y1, x0, y0
+	}
+	if y0 > y2 {
+		x0, y0, x2, y2 = x2, y2, x0, y0
 	}
 	if y1 > y2 {
-		x1, y1, x2, y2 = x2, y2, x1, y1
-	}
-	if y0 > y1 {
-		x0, y0, x1, y1 = x1, y1, x0, y0
+		x2, y2, x1, y1 = x1, y1, x2, y2
 	}
 
-	if y0 == y2 { // y0 = y1 = y2 : it's a line
-		a := x0
-		b := x0
-		if x1 < a {
-			a = x1
-		} else if x1 > b {
-			b = x1
-		}
-		if x2 < a {
-			a = x2
-		} else if x2 > b {
-			b = x2
-		}
-		Line(display, a, y0, b, y0, color)
-		return
+	//Prepare to draw all 3 lines that form the triangle
+	b01 := newBresenham(x0, y0, x1, y1)
+	b02 := newBresenham(x0, y0, x2, y2)
+	b12 := newBresenham(x1, y1, x2, y2)
+
+	b01.Next()
+	b02.Next()
+	b12.Next()
+
+	//Top half of triangle
+	for y := y0; y < y1; y++ {
+
+		//Identify the min and max X coords for this row
+		b01minx, b01maxx := minMaxforRow(&b01)
+		b02minx, b02maxx := minMaxforRow(&b02)
+
+		minx, maxx := combineMinMax(b01minx, b01maxx, b02minx, b02maxx)
+
+		//Draw a line from the min to max to fill this row
+		Line(display, minx, y, maxx, y, c)
 	}
 
-	dx01 := x1 - x0
-	dy01 := y1 - y0
-	dx02 := x2 - x0
-	dy02 := y2 - y0
-	dx12 := x2 - x1
-	dy12 := y2 - y1
+	//Bottom half of triangle (continues drawing of b02)
+	for y := y1; y < y2; y++ {
 
-	sa := int16(0)
-	sb := int16(0)
-	a := int16(0)
-	b := int16(0)
+		//Identify the min and max X coords for this row
+		b12minx, b12maxx := minMaxforRow(&b12)
+		b02minx, b02maxx := minMaxforRow(&b02)
 
-	last := y1 - 1
-	if y1 == y2 {
-		last = y1
+		minx, maxx := combineMinMax(b12minx, b12maxx, b02minx, b02maxx)
+
+		//Draw a line from the min to max to fill this row
+		horizLine(display, minx, y, maxx, c)
 	}
 
-	y := y0
-	for ; y <= last; y++ {
-		a = x0 + sa/dy01
-		b = x0 + sb/dy02
-		sa += dx01
-		sb += dx02
-		Line(display, a, y, b, y, color)
-	}
-
-	sa = dx12 * (last - y1)
-	sb = dx02 * (last - y0)
-
-	for ; y <= y2; y++ {
-		a = x1 + sa/dy12
-		b = x0 + sb/dy02
-		sa += dx12
-		sb += dx02
-		Line(display, a, y, b, y, color)
-	}
 }
