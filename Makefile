@@ -14,3 +14,4 @@ smoke-test:
 	@md5sum ./build/test.hex
 
 test: clean fmt-check smoke-test
+	go test
