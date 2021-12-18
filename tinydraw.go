@@ -205,8 +205,8 @@ func FilledTriangle(display drivers.Displayer, x0 int16, y0 int16, x1 int16, y1 
 		Line(display, a, y, b, y, color)
 	}
 
-	sa = dx12 * (last - y1)
-	sb = dx02 * (last - y0)
+	sa = dx12 * (y - y1)
+	sb = dx02 * (y - y0)
 
 	for ; y <= y2; y++ {
 		a = x1 + sa/dy12
