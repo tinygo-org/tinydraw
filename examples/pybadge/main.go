@@ -2,54 +2,40 @@ package main
 
 import (
 	"image/color"
-	"machine"
 
 	"tinygo.org/x/tinydraw"
-
-	"tinygo.org/x/drivers/st7735"
+	"tinygo.org/x/tinydraw/examples/initdisplay"
 )
 
 func main() {
-	machine.SPI1.Configure(machine.SPIConfig{
-		SCK:       machine.SPI1_SCK_PIN,
-		SDO:       machine.SPI1_SDO_PIN,
-		SDI:       machine.SPI1_SDI_PIN,
-		Frequency: 8000000,
-	})
+	display := initdisplay.InitDisplay()
 
-	display := st7735.New(machine.SPI1, machine.TFT_RST, machine.TFT_DC, machine.TFT_CS, machine.TFT_LITE)
-	display.Configure(st7735.Config{
-		Rotation: st7735.ROTATION_90,
-	})
+	tinydraw.Line(display, 10, 10, 94, 10, getRainbowRGB(0))
+	tinydraw.Line(display, 94, 16, 10, 16, getRainbowRGB(15))
+	tinydraw.Line(display, 10, 20, 10, 118, getRainbowRGB(30))
+	tinydraw.Line(display, 16, 118, 16, 20, getRainbowRGB(45))
 
-	display.FillScreen(color.RGBA{255, 255, 255, 255})
+	tinydraw.Line(display, 40, 40, 80, 80, getRainbowRGB(60))
+	tinydraw.Line(display, 40, 40, 80, 70, getRainbowRGB(75))
+	tinydraw.Line(display, 40, 40, 80, 60, getRainbowRGB(90))
+	tinydraw.Line(display, 40, 40, 80, 50, getRainbowRGB(105))
+	tinydraw.Line(display, 40, 40, 80, 40, getRainbowRGB(120))
 
-	tinydraw.Line(&display, 10, 10, 94, 10, getRainbowRGB(0))
-	tinydraw.Line(&display, 94, 16, 10, 16, getRainbowRGB(15))
-	tinydraw.Line(&display, 10, 20, 10, 118, getRainbowRGB(30))
-	tinydraw.Line(&display, 16, 118, 16, 20, getRainbowRGB(45))
+	tinydraw.Line(display, 100, 100, 40, 100, getRainbowRGB(135))
+	tinydraw.Line(display, 100, 100, 40, 90, getRainbowRGB(150))
+	tinydraw.Line(display, 100, 100, 40, 80, getRainbowRGB(165))
+	tinydraw.Line(display, 100, 100, 40, 70, getRainbowRGB(180))
+	tinydraw.Line(display, 100, 100, 40, 60, getRainbowRGB(195))
+	tinydraw.Line(display, 100, 100, 40, 50, getRainbowRGB(210))
 
-	tinydraw.Line(&display, 40, 40, 80, 80, getRainbowRGB(60))
-	tinydraw.Line(&display, 40, 40, 80, 70, getRainbowRGB(75))
-	tinydraw.Line(&display, 40, 40, 80, 60, getRainbowRGB(90))
-	tinydraw.Line(&display, 40, 40, 80, 50, getRainbowRGB(105))
-	tinydraw.Line(&display, 40, 40, 80, 40, getRainbowRGB(120))
+	tinydraw.Rectangle(display, 30, 106, 120, 20, getRainbowRGB(225))
+	tinydraw.FilledRectangle(display, 34, 110, 112, 12, getRainbowRGB(130))
 
-	tinydraw.Line(&display, 100, 100, 40, 100, getRainbowRGB(135))
-	tinydraw.Line(&display, 100, 100, 40, 90, getRainbowRGB(150))
-	tinydraw.Line(&display, 100, 100, 40, 80, getRainbowRGB(165))
-	tinydraw.Line(&display, 100, 100, 40, 70, getRainbowRGB(180))
-	tinydraw.Line(&display, 100, 100, 40, 60, getRainbowRGB(195))
-	tinydraw.Line(&display, 100, 100, 40, 50, getRainbowRGB(210))
+	tinydraw.Circle(display, 120, 30, 20, getRainbowRGB(240))
+	tinydraw.FilledCircle(display, 120, 30, 16, getRainbowRGB(145))
 
-	tinydraw.Rectangle(&display, 30, 106, 120, 20, getRainbowRGB(225))
-	tinydraw.FilledRectangle(&display, 34, 110, 112, 12, getRainbowRGB(130))
-
-	tinydraw.Circle(&display, 120, 30, 20, getRainbowRGB(240))
-	tinydraw.FilledCircle(&display, 120, 30, 16, getRainbowRGB(145))
-
-	tinydraw.Triangle(&display, 120, 102, 100, 80, 152, 46, getRainbowRGB(155))
-	tinydraw.FilledTriangle(&display, 120, 98, 104, 80, 144, 54, getRainbowRGB(90))
+	tinydraw.Triangle(display, 120, 102, 100, 80, 152, 46, getRainbowRGB(155))
+	tinydraw.FilledTriangle(display, 120, 98, 104, 80, 144, 54, getRainbowRGB(90))
 
 	display.Display()
 
