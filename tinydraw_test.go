@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-//Set to true to generate missing reference images for new tests
+// Set to true to generate missing reference images for new tests
 const generateMissingReferenceImages = false
 
 type testDisplay struct {
