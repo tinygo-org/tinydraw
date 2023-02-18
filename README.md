@@ -1,5 +1,7 @@
-TinyDraw
-=========
+# TinyDraw
+
+[![Build](https://github.com/tinygo-org/tinydraw/actions/workflows/build.yml/badge.svg?branch=dev)](https://github.com/tinygo-org/tinydraw/actions/workflows/build.yml)
+
 TinyDraw is a package for drawing primitives on [TinyGo](https://tinygo.org/) displays. It is heavily based on the [Adafruit GFX library](https://github.com/adafruit/Adafruit-GFX-Library).
 
 ![example](https://raw.githubusercontent.com/tinygo-org/tinydraw/master/example.png)
