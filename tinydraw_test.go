@@ -89,8 +89,8 @@ func compareWithReference(name string, d testDisplay) error {
 			return err
 		}
 
-		err = png.Encode(saveImgFile, d.RGBA)
-		return fmt.Errorf("Image contains differences see %v" + diffFilePath)
+		png.Encode(saveImgFile, d.RGBA)
+		return fmt.Errorf("Image contains differences see %v", diffFilePath)
 	}
 
 	return nil
