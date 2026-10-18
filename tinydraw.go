@@ -10,22 +10,66 @@ import (
 
 var errEmptyRectangle = errors.New("tinydraw: empty rectangle")
 
+// rectangleFiller is a display with a fast FillRectangle, like most drivers
+type rectangleFiller interface {
+	FillRectangle(x int16, y int16, width int16, height int16, color color.RGBA) error
+}
+
+// fillRectangle draws the part of a filled rectangle that is on the display
+func fillRectangle(display drivers.Displayer, x int16, y int16, w int16, h int16, color color.RGBA) {
+	filler, ok := display.(rectangleFiller)
+	if !ok {
+		for i := x; i < x+w; i++ {
+			for j := y; j < y+h; j++ {
+				display.SetPixel(i, j, color)
+			}
+		}
+		return
+	}
+	// FillRectangle rejects rectangles outside the display: clip them
+	sx, sy := display.Size()
+	if x < 0 {
+		w += x
+		x = 0
+	}
+	if y < 0 {
+		h += y
+		y = 0
+	}
+	if x+w > sx {
+		w = sx - x
+	}
+	if y+h > sy {
+		h = sy - y
+	}
+	if w <= 0 || h <= 0 {
+		return
+	}
+	filler.FillRectangle(x, y, w, h, color)
+}
+
+// hLine draws a horizontal line between x0 and x1
+func hLine(display drivers.Displayer, x0 int16, x1 int16, y int16, color color.RGBA) {
+	if x0 > x1 {
+		x0, x1 = x1, x0
+	}
+	fillRectangle(display, x0, y, x1-x0+1, 1, color)
+}
+
+// vLine draws a vertical line between y0 and y1
+func vLine(display drivers.Displayer, x int16, y0 int16, y1 int16, color color.RGBA) {
+	if y0 > y1 {
+		y0, y1 = y1, y0
+	}
+	fillRectangle(display, x, y0, 1, y1-y0+1, color)
+}
+
 // Line draws a line between two points
 func Line(display drivers.Displayer, x0 int16, y0 int16, x1 int16, y1 int16, color color.RGBA) {
 	if x0 == x1 {
-		if y0 > y1 {
-			y0, y1 = y1, y0
-		}
-		for ; y0 <= y1; y0++ {
-			display.SetPixel(x0, y0, color)
-		}
+		vLine(display, x0, y0, y1, color)
 	} else if y0 == y1 {
-		if x0 > x1 {
-			x0, x1 = x1, x0
-		}
-		for ; x0 <= x1; x0++ {
-			display.SetPixel(x0, y0, color)
-		}
+		hLine(display, x0, x1, y0, color)
 	} else { // Bresenham
 		dx := x1 - x0
 		if dx < 0 {
@@ -82,9 +126,7 @@ func FilledRectangle(display drivers.Displayer, x int16, y int16, w int16, h int
 	if w <= 0 || h <= 0 {
 		return errEmptyRectangle
 	}
-	for i := x; i < x+w; i++ {
-		Line(display, i, y, i, y+h-1, color)
-	}
+	fillRectangle(display, x, y, w, h, color)
 	return nil
 }
 

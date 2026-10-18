@@ -1,6 +1,7 @@
 package tinydraw
 
 import (
+	"errors"
 	"fmt"
 	"image"
 	"image/color"
@@ -10,6 +11,8 @@ import (
 	"path/filepath"
 	"testing"
 	"time"
+
+	"tinygo.org/x/drivers"
 )
 
 // Set to true to generate missing reference images for new tests
@@ -101,11 +104,45 @@ func (d *testDisplay) Display() error {
 	return nil
 }
 
+// fillerDisplay is a testDisplay with FillRectangle, as strict as the drivers
+type fillerDisplay struct {
+	testDisplay
+}
+
+func (d *fillerDisplay) FillRectangle(x, y, width, height int16, c color.RGBA) error {
+	w, h := d.Size()
+	if x < 0 || y < 0 || width <= 0 || height <= 0 || x+width > w || y+height > h {
+		return errors.New("rectangle coordinates outside display area")
+	}
+	for i := x; i < x+width; i++ {
+		for j := y; j < y+height; j++ {
+			d.SetPixel(i, j, c)
+		}
+	}
+	return nil
+}
+
+type displayUnderTest struct {
+	name    string
+	display drivers.Displayer
+	image   testDisplay
+}
+
+// newTestDisplays returns a display without and a display with FillRectangle
+func newTestDisplays() []displayUnderTest {
+	plain := newTestDisplay()
+	filler := &fillerDisplay{newTestDisplay()}
+	return []displayUnderTest{
+		{"SetPixel", &plain, plain},
+		{"FillRectangle", filler, filler.testDisplay},
+	}
+}
+
 func TestFilledTriangleClockMinuteHand(t *testing.T) {
 
 	black := color.RGBA{0, 0, 0, 255}
 	unfilledDisplay := newTestDisplay()
-	filledDisplay := newTestDisplay()
+	filledDisplays := newTestDisplays()
 
 	x := int16(160)
 	y := int16(120)
@@ -130,13 +167,14 @@ func TestFilledTriangleClockMinuteHand(t *testing.T) {
 		x2 := x + int16(minuteRadius*mx)
 		y2 := y - int16(minuteRadius*my)
 
-		FilledTriangle(
-
-			&filledDisplay,
-			x0, y0,
-			x1, y1,
-			x2, y2,
-			black)
+		for _, d := range filledDisplays {
+			FilledTriangle(
+				d.display,
+				x0, y0,
+				x1, y1,
+				x2, y2,
+				black)
+		}
 
 		Triangle(
 			&unfilledDisplay,
@@ -148,12 +186,14 @@ func TestFilledTriangleClockMinuteHand(t *testing.T) {
 		testTime = testTime.Add(1 * time.Minute)
 	}
 
-	err := compareWithReference("TestFilledTriangleClockMinuteHand", filledDisplay)
-	if err != nil {
-		t.Errorf("Fail %v", err)
+	for _, d := range filledDisplays {
+		err := compareWithReference("TestFilledTriangleClockMinuteHand", d.image)
+		if err != nil {
+			t.Errorf("Fail on %v display: %v", d.name, err)
+		}
 	}
 
-	err = compareWithReference("TestTriangleClockMinuteHand", unfilledDisplay)
+	err := compareWithReference("TestTriangleClockMinuteHand", unfilledDisplay)
 	if err != nil {
 		t.Errorf("Fail %v", err)
 	}
@@ -179,9 +219,12 @@ func TestTriangles(t *testing.T) {
 		{"HorizLine", 80, 200, 160, 200, 213, 200},   //Horizontal line
 		{"VertLine", 80, 80, 80, 120, 80, 200},       //Vertical line
 
-		{"ClockHand1", 160, 115, 160, 125, 255, 120}, //Previously rendered too Wide
-		{"ClockHand2", 160, 116, 160, 124, 254, 129}, //Previusly fill extendended to the left outside of triangle
-		{"ClockHand3", 165, 120, 155, 120, 160, 215}, //Too Wide
+		{"ClockHand1", 160, 115, 160, 125, 255, 120},     //Previously rendered too Wide
+		{"ClockHand2", 160, 116, 160, 124, 254, 129},     //Previusly fill extendended to the left outside of triangle
+		{"ClockHand3", 165, 120, 155, 120, 160, 215},     //Too Wide
+		{"OffLeft", -40, 20, 100, 60, 30, 200},           //Partly outside the display
+		{"OffBottomRight", 250, 180, 360, 200, 200, 280}, //Partly outside the display
+		{"Wide", 20, 100, 300, 120, 160, 140},            //Wider than high
 	}
 
 	colors := []color.RGBA{
@@ -210,19 +253,99 @@ func TestTriangles(t *testing.T) {
 			t.Errorf("Fail %v", err)
 		}
 
-		filledDisplay := newTestDisplay()
+		for _, d := range newTestDisplays() {
+			//Test all permutations of coordinates
+			FilledTriangle(d.display, test.x0, test.y0, test.x1, test.y1, test.x2, test.y2, colors[0])
+			FilledTriangle(d.display, test.x0, test.y0, test.x2, test.y2, test.x1, test.y1, colors[1])
+			FilledTriangle(d.display, test.x1, test.y1, test.x0, test.y0, test.x2, test.y2, colors[2])
+			FilledTriangle(d.display, test.x1, test.y1, test.x2, test.y2, test.x0, test.y0, colors[3])
+			FilledTriangle(d.display, test.x2, test.y2, test.x0, test.y0, test.x1, test.y1, colors[4])
+			FilledTriangle(d.display, test.x2, test.y2, test.x1, test.y1, test.x0, test.y0, colors[5])
 
-		//Test all permutations of coordinates
-		FilledTriangle(&filledDisplay, test.x0, test.y0, test.x1, test.y1, test.x2, test.y2, colors[0])
-		FilledTriangle(&filledDisplay, test.x0, test.y0, test.x2, test.y2, test.x1, test.y1, colors[1])
-		FilledTriangle(&filledDisplay, test.x1, test.y1, test.x0, test.y0, test.x2, test.y2, colors[2])
-		FilledTriangle(&filledDisplay, test.x1, test.y1, test.x2, test.y2, test.x0, test.y0, colors[3])
-		FilledTriangle(&filledDisplay, test.x2, test.y2, test.x0, test.y0, test.x1, test.y1, colors[4])
-		FilledTriangle(&filledDisplay, test.x2, test.y2, test.x1, test.y1, test.x0, test.y0, colors[5])
+			err = compareWithReference(fmt.Sprintf("TestTriangles_%v_Filled", test.name), d.image)
+			if err != nil {
+				t.Errorf("Fail on %v display: %v", d.name, err)
+			}
+		}
+	}
+}
 
-		err = compareWithReference(fmt.Sprintf("TestTriangles_%v_Filled", test.name), filledDisplay)
-		if err != nil {
-			t.Errorf("Fail %v", err)
+type rectangleTest struct {
+	name string
+	x    int16
+	y    int16
+	w    int16
+	h    int16
+}
+
+func TestFilledRectangles(t *testing.T) {
+	tests := []rectangleTest{
+		{"Inside", 40, 30, 200, 150},
+		{"OnePixel", 160, 120, 1, 1},
+		{"HorizLine", 20, 100, 280, 1},
+		{"VertLine", 100, 20, 1, 200},
+		{"OffTopLeft", -20, -30, 100, 80},
+		{"OffBottomRight", 260, 200, 100, 80},
+		{"LargerThanDisplay", -10, -10, 340, 260},
+		{"FullyOff", 400, 300, 20, 20},
+	}
+
+	for _, test := range tests {
+		for _, d := range newTestDisplays() {
+			FilledRectangle(d.display, test.x, test.y, test.w, test.h, color.RGBA{255, 0, 0, 255})
+
+			err := compareWithReference(fmt.Sprintf("TestFilledRectangles_%v", test.name), d.image)
+			if err != nil {
+				t.Errorf("Fail on %v display: %v", d.name, err)
+			}
+		}
+	}
+}
+
+type circleTest struct {
+	name string
+	x    int16
+	y    int16
+	r    int16
+}
+
+func TestFilledCircles(t *testing.T) {
+	tests := []circleTest{
+		{"Large", 160, 120, 100},
+		{"Small", 160, 120, 5},
+		{"Radius1", 160, 120, 1},
+		{"Radius0", 160, 120, 0},
+		{"OffTopLeft", 10, 20, 60},
+		{"OffBottomRight", 300, 230, 60},
+	}
+
+	for _, test := range tests {
+		for _, d := range newTestDisplays() {
+			FilledCircle(d.display, test.x, test.y, test.r, color.RGBA{0, 0, 255, 255})
+
+			err := compareWithReference(fmt.Sprintf("TestFilledCircles_%v", test.name), d.image)
+			if err != nil {
+				t.Errorf("Fail on %v display: %v", d.name, err)
+			}
+		}
+	}
+}
+
+func TestRectangles(t *testing.T) {
+	tests := []rectangleTest{
+		{"Inside", 40, 30, 200, 150},
+		{"OffTopLeft", -20, -30, 100, 80},
+		{"OffBottomRight", 260, 200, 100, 80},
+	}
+
+	for _, test := range tests {
+		for _, d := range newTestDisplays() {
+			Rectangle(d.display, test.x, test.y, test.w, test.h, color.RGBA{0, 255, 0, 255})
+
+			err := compareWithReference(fmt.Sprintf("TestRectangles_%v", test.name), d.image)
+			if err != nil {
+				t.Errorf("Fail on %v display: %v", d.name, err)
+			}
 		}
 	}
 }
